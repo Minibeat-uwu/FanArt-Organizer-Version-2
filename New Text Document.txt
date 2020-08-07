@@ -1,0 +1,29 @@
+(py36env) PS D:\Projects\GitHub\FanArt-Organizer-Ver2> python -u "d:\Projects\GitHub\FanArt-Organizer-Ver2\TagCollectionMachine.py"
+Image: 53666637_p0.jpg        Currently does not have active link
+Image: 54750505_p0.jpg        Currently does not have active link
+Image: 56283055_p0.jpg        Currently does not have active link
+Failed to collect the tag data for the image: 57281577_p0.jpg. At position: 166
+Going to restart the engine due to Pixiv API Rate Limit... wait bout 5 min
+I'm back
+Traceback (most recent call last):
+  File "d:\Projects\GitHub\FanArt-Organizer-Ver2\TagCollectionMachine.py", line 87, in <module>
+    FanartDataDic["ArtTags"]=TagCollector(temp[0])
+  File "d:\Projects\GitHub\FanArt-Organizer-Ver2\TagCollectionMachine.py", line 42, in TagCollector
+    test=client.fetch_bookmark(ID)
+  File "D:\Users\hotja\anaconda3\envs\py36env\lib\site-packages\pixivapi\common.py", line 25, in wrapper
+    return func(self, *args, **kwargs)
+  File "D:\Users\hotja\anaconda3\envs\py36env\lib\site-packages\pixivapi\client.py", line 605, in fetch_bookmark
+    params={'illust_id': illustration_id},
+  File "D:\Users\hotja\anaconda3\envs\py36env\lib\site-packages\pixivapi\client.py", line 82, in _request_json
+    f'Status code: {response.status_code}', response.text
+pixivapi.errors.BadApiResponse: ('Status code: 403', '{"error":{"user_message":"","message":"Rate Limit","reason":"","user_message_details":{}}}')
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "d:\Projects\GitHub\FanArt-Organizer-Ver2\TagCollectionMachine.py", line 113, in <module>
+    FanartDataDic["ArtLocation"]=fileDestinationFinder(PicFile,Location)
+  File "d:\Projects\GitHub\FanArt-Organizer-Ver2\TagCollectionMachine.py", line 59, in fileDestinationFinder
+    if CodeNumber in PicLocation[i]:
+TypeError: 'in <string>' requires string as left operand, not list
+(py36env) PS D:\Projects\GitHub\FanArt-Organizer-Ver2> 

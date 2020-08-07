@@ -5,13 +5,14 @@ import pathlib as pl
 import core
 import program as po
 import pandas as pd
+
  
 
 DanbooruPos = 'danbooru-resnet_custom_v1-p3'
 
 
-DirList=['D:/Projects/Results/Chibi','D:/Projects/Results/Food','D:/Projects/Results/Scenery',
-         'D:/Projects/Results/Animal','D:/Projects/Results/Human', 'D:/Projects/Results/Other']
+DirList=['D:/PicturesTestGround/1stStage/Chibi','D:/PicturesTestGround/1stStage/Food','D:/PicturesTestGround/1stStage/Scenery',
+         'D:/PicturesTestGround/1stStage/Animal','D:/PicturesTestGround/1stStage/Human', 'D:/PicturesTestGround/1stStage/Other']
 
 # Chibi, Food, Scenery, Animal, Human, Other
 
@@ -78,24 +79,31 @@ def Movers(Trig):
     except:
         pass
 
-List_files = core.get_files_recursively('D:/Projects/wallpaper 3')
+
+        
+List_files = core.get_files_recursively('E:/Otaku Fan Arts/Pictures')
 
 for i in range(len(List_files)):
     
     PicLoc = List_files[i]
     
-    tags, results = po.evaluate_project(DanbooruPos, PicLoc)
+    try:
+        tags, results = po.evaluate_project(DanbooruPos, PicLoc)
+        # Section_results: Human, Animal, Chibi, Food, Scenery
+        
+        Section_results = Sections_Creator(tags, results)
+        
+        Human=Section_results.pop(4)
+        # print(PicLoc + ': ' + str(Section_results))
 
-    # Section_results: Human, Animal, Chibi, Food, Scenery
+        Movers(Human)
+        print(str(i)+'/'+str(len(List_files))+ '    Current File: '+PicLoc, end='\r')
+
+
+    except:
+        print('Failed to evaluate the image: '+ str(PicLoc))
+
     
-    Section_results = Sections_Creator(tags, results)
-     
-    Human=Section_results.pop(4)
-    print(PicLoc + ': ' + str(Section_results))
-
-    Movers(Human)
-    # print(str(i)+'/'+str(len(List_files))+ '    Current File: '+PicLoc, end='\r')
-
 
 
 

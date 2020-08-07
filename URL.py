@@ -6,10 +6,15 @@ import pandas as pd
 import core
 from pixivapi import *
 import operator
+import time
+import requests
 from os.path import isfile,join
 from os import listdir
 from mlxtend.preprocessing import TransactionEncoder
 from mlxtend.frequent_patterns import apriori
+
+
+# Dictionary, save the tags
 
 
 
@@ -19,42 +24,20 @@ client.login('dicker_max', 'DickerMax@MyWarehouse')
 Location='D:/Projects/Results/Chibi'
 Organized_Loc='D:/Projects/Results2'
 
-
-
-
-
-
-
-def fileDestinationFinder( CodeNumber,PicLocation):
-    temp=''
-    for i in range(len(PicLocation)):
-        
-        if CodeNumber in PicLocation[i]:
-            
-            temp=PicLocation[i]
-            break
-
-    return temp
-
-
-# Creates all the existing folder's name list in that directory.
-def folderDestinationList(OrgList):
-    foldList=[]
-    for r,d,f in os.walk(OrgList):
-        for folder in d:
-            foldList.append(os.path.join(r,folder))
-            
-    return foldList
-
 # Collect just the tags from the dict lists
 def TagCollector(ID):
+    # Linked to the pixiv to collect the tags
     test=client.fetch_bookmark(ID)
     Taggies=[]
 
+    # Position 2=tags
     a=list(test.values())
     b=a[2]
     for i in range(len(b)):
-        Taggies.append(operator.itemgetter('name')(b[i]))
+        teemp=operator.itemgetter('name')(b[i])
+        clean=teemp.replace('/','_').replace(':','_').replace('*','_').replace('?','_').replace('"','_').replace('<','_').replace('>','_').replace('|','_')
+
+        Taggies.append(clean)
     return(Taggies)
 
 # Creates a pairing folder. AList is the aprioried list, which will only take pairs that exists and creates a folder for it. 
@@ -64,7 +47,6 @@ def FolderCreator(AList,OLoc):
     # Creates a list of existing folders
     folders=folderDestinationList(OLoc)
     
-
 
     # Creates a list of pairs where there are no repetition to any tags
     for i in range(len(AList)):
@@ -88,7 +70,7 @@ def FolderCreator(AList,OLoc):
                 if trig==False:
                     
                     Lili.append(x)
-                    
+                    print(x)
                         
     
             # Now it's time to combine Lili(non repeating pairs) and folder list
@@ -103,24 +85,43 @@ def FolderCreator(AList,OLoc):
                 trig=True
             
         if trig==False:
-            clean=Lili[i].replace('/','_').replace(':','_').replace('*','_').replace('?','_').replace('"','_').replace('<','_').replace('>','_').replace('|','_')
-            loc=OLoc+'/'+clean
-            tempLoc=OLoc+'/'+clean
-            os.makedirs(tempLoc)
+            try:
+                
+                clean=Lili[i].replace('/','_').replace(':','_').replace('*','_').replace('?','_').replace('"','_').replace('<','_').replace('>','_').replace('|','_')
+                print('Current shitty folder that is going to be created: '+ clean)
+                loc=OLoc+'/'+clean
+                tempLoc=OLoc+'/'+clean
+                os.makedirs(tempLoc)
+            except:
+                print('Failed to create the folder')
 
-def TagsDestComparator(taggies,DestinationList):
-    Trigger=False
-    for i in range(len(taggies)):
-        for j in range(len(DestiantionList)):
-            if taggies[i]==DestinationList[j]:
-                Trigger==True
-                break
+
+# Creates all the existing folder's name list in that directory.
+def folderDestinationList(OrgList):
+    foldList=[]
+    for r,d,f in os.walk(OrgList):
+        for folder in d:
+            foldList.append(os.path.join(r,folder))
+            
+    return foldList
+
+def fileDestinationFinder( CodeNumber,PicLocation):
+    temp=''
+    for i in range(len(PicLocation)):
+        
+        if CodeNumber in PicLocation[i]:
+            
+            temp=PicLocation[i]
+            break
+
+    return temp
+
 
 
 #          str       list    str
 def Mover(FileCode, ArtTags, Destination,Piclc):
     #PicFile's location is == Dataset's Position
-    # FileCode:
+    # FileCode: Successful Files that passed the test
 
     # it's going to compare the art tags with the file names and see if there's any matches. If there's at least one match, it will move that bugger to that folder.
     for i in range(len(FileCode)):
@@ -129,131 +130,119 @@ def Mover(FileCode, ArtTags, Destination,Piclc):
         count=0
         while TagTrig==False:
             
+
+            # Issue: if there is no match to any of the folders, it skips the reset of counter... which ends up extending over it's limit. 
             for k in range(len(Destination)):
-                    
+                # print('TagList length: '+str(len(TagList))+'    Current TagPosition: '+ str(count)+ '   Current Destination Position: '+str(k))
+                # print(TagList[count]+'      '+Destination[k])
                 if TagList[count] in Destination[k]:
                     FileLoc=fileDestinationFinder(FileCode[i],Piclc)
+                    
                     # print(FileCode[i]+',         '+TagList[i]+' is in '+ Destination[j])
                     temp=Destination[k]
                     
                     # print(FileLoc+'         '+ temp)
                     try:
-                        
+                        print('Moving: ' + FileCode[i] +'-> '+temp+ '      with matching: '+TagList[count] )
                         shutil.move(FileLoc,temp)
+                        # print('moved')
                     except:
                         print('Failed to move: '+ Destination[k])
-                    
+
                     TagTrig=True
                     break
+            
             count=count+1
-        
+                # Resets the counter when it goes through the stuff and end up not finding the results. 
+            if count==len(TagList):
+                print('No matching tags->folders to: '+str(FileCode[i]))
+                count=0
+                TagTrig=True
+                                
 
             
 
+def url_ok(url):
+    r=requests.head(url)
+    return r.status_code
 
 
 
 
-
-
-
-
-
-
-
+# PicLoc:       Direction to the picture location
+# PicFile:      List of Picture file's names 
+# Dataset:      List of tags for each of the files
 PicLoc=core.get_files_recursively(Location)
 PicFile=[f for f in listdir(Location) if isfile(join(Location,f))]
 Dataset=[]
+SuccessFile=[]
 
+test=0
 
+# Collects all the tags for each PicFile
+# There's a rate limit of 350 files consecutively. Once it hits 350, it stops us from collecting the data. 
+temp=''
 for i in range(len(PicFile)):
     try:
         if '_' in PicFile[i]:
+            print(str(test)+' / '+str(len(PicFile)) + '     Completed', end='\r')
             temp=PicFile[i].split('_')
             
             Dataset.append(TagCollector(temp[0]))
+            SuccessFile.append(PicFile[i])
+            test=test+1
             
-
     except:
-        print('nope')
-
-
-# for i in range(len(PicFile)):
-#     try:
-#         if '_' in PicFile[i]:
-#             temp=PicFile[i].split('_')
-#             # print(temp[0])
-#             Dataset.append(TagCollector(temp[0]))
-#     except:
-#         print('Error reading file: ' + PicFile[i])
         
-#     # print(temp)
-#     # print(TagList)
+        # Test if the link is alive or not, if it's alive, it will wait for 5 min, if it's dead... skips to the next.
+        url='https://www.pixiv.net/artworks/'+str(temp[0])
+        teep=url_ok(url)
+        if teep==404:
+            print('Image: '+PicFile[i]+'        Currently does not have active link')
+        else:
+                
+            
+            print('Failed to collect the tag data for the image: '+ PicFile[i] + '. At position: '+ str(test))
+            print('Going to restart the engine due to Pixiv API Rate Limit... wait bout 5 min')
+            time.sleep(300)
+            print("I'm back")
+            if '_' in PicFile[i]:
+                temp=PicFile[i].split('_')
+                
+                Dataset.append(TagCollector(temp[0]))
+        
 
 
+# print(test)
+time.sleep(3)
+
+
+# Lets see what would happen if we create a while loop of apriori after it goes through once. 
+
+# Apriori Process:
 te = TransactionEncoder()
 te_ary=te.fit(Dataset).transform(Dataset)
 df=pd.DataFrame(te_ary,columns=te.columns_)
 Aprioried_List= apriori(df, min_support=0.05, use_colnames=True)
 
-FolderCreator(Aprioried_List,Organized_Loc)
-
-UpdatedFolderList=folderDestinationList(Organized_Loc)
-
-# Pic Location position != PicFile position
-# PicFile position == Dataset Position
-
-# for i in range(len(PicLoc)):
-    
-#     print(PicLoc[i]+'       '+PicFile[i])
-
-
-Mover(PicFile,Dataset, UpdatedFolderList,PicLoc)
+# print(type(Dataset[0][1]))
 
 
 
+Aprioried_List.to_csv('test.csv')
+
+# print('Hold your horse bois')
+# time.sleep(3)
+
+# # Creates all the new pairing type folders
+# FolderCreator(Aprioried_List,Organized_Loc)
+
+# print('Folder created')
+# time.sleep(3)
 
 
-        # if not os.path.isdir(temp_loc):
-        #     os.makedirs(temp_loc)
-        
-    
+# # Update the list of existing folders (old and new ones)
+# UpdatedFolderList=folderDestinationList(Organized_Loc)
 
-
-
-
-
-# test=str(yeet.loc[54,'itemsets'])
-# print(len(yeet.loc[54,'itemsets']))
-
-# print(test)
-
-
-# temp1,temp2=x.split(', ')
-
-# trig=False
-# loc=0
-# for d in range(len(Dataset)):
-#     if temp1 and temp2 in Dataset[d]:
-#         trig=True
-#         loc=d
-#         break
-
-
-# print(Dataset[loc])
-# print(str(loc)+': '+str(trig))
-
-
-# yeet.to_csv(r'example.csv', encoding='utf_8_sig', header=True)
-# print(counter)
-
-
-
-
-
-
-# print(Dataset)
-
-
-# a=operator.itemgetter('tags')(test)
-# b=
+# # Moves the specific file to that location
+# Mover(SuccessFile,Dataset, UpdatedFolderList,PicLoc)
