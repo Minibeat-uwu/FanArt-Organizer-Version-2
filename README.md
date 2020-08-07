@@ -5,3 +5,5 @@
  2) Frequent itemset 
 
 It's only in the skeleton form and all the functions are seperated. **Still not user friendly**
+
+But if you want to play around with the code, go right ahead. 
