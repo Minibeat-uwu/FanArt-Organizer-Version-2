@@ -4,4 +4,4 @@
  1) Visual base organizer using machine learning/neural network.
  2) Frequent itemset 
 
-It's only in the skeleton form and all the functions are seperated. ** Still not user friendly**
+It's only in the skeleton form and all the functions are seperated. **Still not user friendly**
